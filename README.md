@@ -1,0 +1,2 @@
+# rubix
+Halite III bot :)
