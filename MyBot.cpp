@@ -4,9 +4,17 @@
 
 #include <random>
 #include <ctime>
+#include <queue>
 
 using namespace std;
 using namespace hlt;
+
+
+struct CompareCells {
+    bool operator()(MapCell* left, MapCell* right) {
+        return (left->halite - left->distance_from_shipyard) < (right->halite - right->distance_from_shipyard);
+    }
+};
 
 int main(int argc, char* argv[]) {
     unsigned int rng_seed;
@@ -18,9 +26,23 @@ int main(int argc, char* argv[]) {
     mt19937 rng(rng_seed);
 
     Game game;
-    // At this point "game" variable is populated with initial map data.
-    // This is a good place to do computationally expensive start-up pre-processing.
-    // As soon as you call "ready" function below, the 2 second per turn timer will start.
+    shared_ptr<Player> me = game.me;
+    unique_ptr<GameMap>& game_map = game.game_map;
+
+    Position shipyard_pos = me->shipyard->position;
+    
+    int ALL_CELLS = game.game_map->width * game.game_map->height;
+    vector<MapCell*> cells_around_shipyard;
+    for (int x = -2; x < 2; x++) {
+        for (int y = -2; y < 2; y++) {
+            MapCell* cell = game_map->at(Position(shipyard_pos.x + x, shipyard_pos.y + y));
+            cell->distance_from_shipyard = abs(x) + abs(y);
+            cells_around_shipyard.push_back(cell);
+        }
+    }
+
+    priority_queue<MapCell*, vector<MapCell*>, CompareCells> cells(cells_around_shipyard);
+
     game.ready("MyCppBot");
 
     log::log("Successfully created bot! My Player ID is " + to_string(game.my_id) + ". Bot rng seed is " + to_string(rng_seed) + ".");
@@ -42,11 +64,14 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        if (
-            game.turn_number <= 200 &&
+        int all_ships = 0;
+        for (const auto& player: game.players) {
+            all_ships += player->ships.size();
+        }
+        float load_factor = all_ships/ALL_CELLS;
+        if (load_factor < 0.75 &&
             me->halite >= constants::SHIP_COST &&
-            !game_map->at(me->shipyard)->is_occupied())
-        {
+            !game_map->at(me->shipyard)->is_occupied()) {
             command_queue.push_back(me->shipyard->spawn());
         }
 

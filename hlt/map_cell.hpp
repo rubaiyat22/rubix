@@ -11,10 +11,12 @@ namespace hlt {
         Halite halite;
         std::shared_ptr<Ship> ship;
         std::shared_ptr<Entity> structure; // only has dropoffs and shipyards; if id is -1, then it's a shipyard, otherwise it's a dropoff
+        int distance_from_shipyard;
 
         MapCell(int x, int y, Halite halite) :
             position(x, y),
-            halite(halite)
+            halite(halite),
+            distance_from_shipyard(0)
         {}
 
         bool is_empty() const {
