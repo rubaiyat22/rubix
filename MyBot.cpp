@@ -41,7 +41,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    priority_queue<MapCell*, vector<MapCell*>, CompareCells> cells(cells_around_shipyard);
+    priority_queue<MapCell*, vector<MapCell*>, CompareCells> cells(cells_around_shipyard.begin(), cells_around_shipyard.end());
 
     game.ready("MyCppBot");
 
